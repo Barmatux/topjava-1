@@ -14,7 +14,7 @@
     </appender>
 
     <appender name="console" class="ch.qos.logback.core.ConsoleAppender">
-        <encoder>
+        <encoder>f
             <charset>UTF-8</charset>
             <pattern>%d{HH:mm:ss.SSS} %-5level %class{50}.%M:%L - %msg%n</pattern>
         </encoder>

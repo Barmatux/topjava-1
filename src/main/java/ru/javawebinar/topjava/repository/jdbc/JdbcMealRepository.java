@@ -1,6 +1,7 @@
 package ru.javawebinar.topjava.repository.jdbc;
 
 
+import org.slf4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.jdbc.core.BeanPropertyRowMapper;
 import org.springframework.jdbc.core.JdbcTemplate;
@@ -12,8 +13,12 @@ import ru.javawebinar.topjava.model.Meal;
 import ru.javawebinar.topjava.repository.MealRepository;
 import ru.javawebinar.topjava.web.SecurityUtil;
 
+import java.sql.Timestamp;
 import java.time.LocalDateTime;
+import java.util.Collections;
 import java.util.List;
+
+import static org.slf4j.LoggerFactory.getLogger;
 
 @Repository
 public class JdbcMealRepository implements MealRepository {
@@ -25,6 +30,7 @@ public class JdbcMealRepository implements MealRepository {
     private final NamedParameterJdbcTemplate namedParameterJdbcTemplate;
 
     private final SimpleJdbcInsert insertMeal;
+    private static final Logger log = getLogger(JdbcMealRepository.class);
 
     @Autowired
     public JdbcMealRepository(JdbcTemplate jdbcTemplate, NamedParameterJdbcTemplate namedParameterJdbcTemplate) {
@@ -47,33 +53,40 @@ public class JdbcMealRepository implements MealRepository {
         if (meal.isNew()) {
             Number newKey = insertMeal.executeAndReturnKey(map);
             meal.setId(newKey.intValue());
-//        } else if (namedParameterJdbcTemplate.update(
-//            "UPDATE meals SET datetime=:datetime, description=:description, calories=:calories, id=:id WHERE userId=:userId"
-//            , map) == 0) {
-//        return null;
-    }
+        } else if (namedParameterJdbcTemplate.update(
+                "UPDATE meals SET datetime=:datetime, description=:description, calories=:calories, id=:id WHERE userId=:userId and id=:id"
+                , map) == 0) {
+            return null;
+        }
         return meal;
     }
 
     @Override
     public boolean delete(int id, int userId) {
         return jdbcTemplate.update("DELETE FROM meals" +
-                " WHERE id=?",id)!=0;
+                " WHERE id=?", id) != 0;
     }
 
     @Override
     public Meal get(int id, int userId) {
-        return jdbcTemplate.queryForObject("SELECT * FROM meals WHERE id=?",ROW_MAPPER,id);
+        return jdbcTemplate.queryForObject("SELECT * FROM meals WHERE id=?", ROW_MAPPER, id);
     }
 
     @Override
     public List<Meal> getAll(int userId) {
 
-        return jdbcTemplate.query("SELECT * FROM meals WHERE userId=? ORDER BY datetime",ROW_MAPPER,userId);
+        return jdbcTemplate.query("SELECT * FROM meals WHERE userId=? ORDER BY datetime", ROW_MAPPER, userId);
     }
 
     @Override
     public List<Meal> getBetween(LocalDateTime startDate, LocalDateTime endDate, int userId) {
-        return jdbcTemplate.query("SELECT * FROM meals WHERE userId=?  BETWEEN 'startDate' AND 'endTime' ORDER BY datetime",ROW_MAPPER,userId);
+        try {
+            return jdbcTemplate.query("SELECT * FROM meals WHERE userId=? AND  (datetime >= ?" +
+                    "  AND datetime < ?) ORDER BY datetime", ROW_MAPPER, userId, Timestamp.valueOf(startDate), Timestamp.valueOf(endDate));
+        } catch (Exception e) {
+            log.error("Something bad happened with date", e);
+            return Collections.emptyList();
+        }
+
     }
 }

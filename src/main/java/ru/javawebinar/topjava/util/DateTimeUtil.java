@@ -24,8 +24,16 @@ public class DateTimeUtil {
         return StringUtils.isEmpty(str) ? null : LocalTime.parse(str);
     }
 
-    public static LocalDateTime createDateTime(@Nullable LocalDate date, LocalDate defaultDate, LocalTime time) {
-        return LocalDateTime.of(date != null ? date : defaultDate, time);
+    public static LocalDateTime getStartInclusive(LocalDate localDate) {
+        return startOfDay(localDate != null ? localDate : MIN_DATE);
+    }
+
+    public static LocalDateTime getEndExclusive(LocalDate localDate) {
+        return startOfDay(localDate != null ? localDate.plus(1, ChronoUnit.DAYS) : MAX_DATE);
+    }
+
+    private static LocalDateTime startOfDay(LocalDate localDate) {
+        return LocalDateTime.of(localDate, LocalTime.MIN);
     }
 }
 

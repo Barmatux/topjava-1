@@ -3,13 +3,36 @@ package ru.javawebinar.topjava.model;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
-
+@Entity
+@Table(name = "meals")
+@NamedQueries({
+//        @NamedQuery(name = User.DELETE, query = "DELETE FROM User u WHERE u.id=:id"),
+        @NamedQuery(name = Meal.GET_ALL, query = "SELECT m FROM Meal m  WHERE m.user=:user"),
+        @NamedQuery(name = Meal.GET_BETWEEN, query = "SELECT m FROM Meal m WHERE m.user=:user AND m.dateTime" +
+                " BETWEEN :startDate AND :endDate ORDER BY m.dateTime desc ")
+})
 public class Meal extends AbstractBaseEntity {
+
+    public  static  final String GET_ALL="Meal.getAll";
+    public  static  final String GET_BETWEEN="Meal.Between";
+
+    @Column(name = "date_time", nullable = false)
+    @NotNull
     private LocalDateTime dateTime;
 
+    @Column(name = "description", nullable = false)
+    @Size(max = 150)
+    @NotBlank
     private String description;
 
+    @Column(name = "calories")
+    @NotNull
     private int calories;
+
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "user_id",nullable = false)
+    private User user;
 
     public Meal() {
     }
